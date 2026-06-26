@@ -45,15 +45,29 @@ class AsterDexAdapter {
   constructor(mode, credentials) {
     this.mode = mode;
     this.credentials = credentials;
+    this.plugin = new AsterDexPlugin({
+      baseUrl: credentials.apiBase || AsterDexPlugin.defaults.DEFAULT_FUTURES_BASE_URL,
+      signer: credentials.apiSigner,
+    });
+  }
+
+  async latestPrice(symbol, fallbackPrice) {
+    if (this.mode !== "live") return fallbackPrice;
+    const candle = await this.plugin.candle(symbol);
+    return Number.isFinite(candle.price) ? candle.price : fallbackPrice;
   }
 
   async placeOrder(order) {
     if (this.mode === "live") {
-      if (!this.credentials.apiBase || !this.credentials.apiKey || !this.credentials.apiSecret) {
-        throw new Error("Live-tila vaatii AsterDex API -tiedot.");
+      if (!this.credentials.apiBase || !this.credentials.apiSigner) {
+        throw new Error("Live-tila vaatii AsterDex Base URL- ja signer-osoitteen.");
       }
-      // Production integration point: sign and POST order to the configured AsterDex endpoint.
-      return { ...order, id: crypto.randomUUID(), status: "LIVE_READY" };
+      const response = await this.plugin.placeMarketOrder({
+        symbol: order.symbol,
+        side: order.side,
+        quantity: order.size.toFixed(6),
+      });
+      return { ...order, id: response.orderId || crypto.randomUUID(), status: response.status || "LIVE_SENT", raw: response };
     }
     return { ...order, id: crypto.randomUUID(), status: "PAPER_FILLED" };
   }
@@ -71,6 +85,7 @@ function readSettings() {
     stopLoss: Number($("stopLoss").value),
     takeProfit: Number($("takeProfit").value),
     apiBase: $("apiBase").value.trim(),
+    apiSigner: $("apiSigner").value.trim(),
     apiKey: $("apiKey").value.trim(),
     apiSecret: $("apiSecret").value.trim(),
   };
@@ -99,9 +114,10 @@ function selectBestSignal(settings) {
 async function openPosition(signal, settings) {
   if (state.positions.length >= settings.maxPositions || state.positions.some((position) => position.symbol === signal.symbol)) return;
   const candle = syntheticCandle(signal.symbol);
+  const adapter = new AsterDexAdapter(settings.mode, settings);
+  candle.price = await adapter.latestPrice(signal.symbol, candle.price);
   const stake = state.cash * (settings.risk / 100);
   const size = stake / candle.price;
-  const adapter = new AsterDexAdapter(settings.mode, settings);
   const order = await adapter.placeOrder({ symbol: signal.symbol, side: "BUY", size, price: candle.price });
   state.cash -= stake;
   state.positions.push({ ...order, entry: candle.price, size, openedAt: new Date() });
@@ -173,7 +189,7 @@ function addLog(message) {
 function startBot(event) {
   event?.preventDefault();
   const settings = readSettings();
-  if (settings.mode === "live" && !confirm("Vahvista live-tila. Olet vastuussa oikeista toimeksiannoista.")) return;
+  if (settings.mode === "live" && !confirm("Vahvista live-tila. AsterDex-plugin allekirjoittaa EIP-712 toimeksiantoja ja olet vastuussa oikeista toimeksiannoista.")) return;
   state.running = true;
   $("botState").textContent = "Käynnissä";
   $("botState").className = "pill running";

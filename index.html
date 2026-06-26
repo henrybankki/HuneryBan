@@ -54,7 +54,8 @@
           </div>
           <details>
             <summary>AsterDex API -asetukset</summary>
-            <label>Base URL<input id="apiBase" type="url" placeholder="https://api.asterdex.example" /></label>
+            <label>Base URL<input id="apiBase" type="url" value="https://fapi3.asterdex.com" placeholder="https://fapi3.asterdex.com" /></label>
+            <label>Signer wallet<input id="apiSigner" type="text" placeholder="0x... Aster API signer" /></label>
             <label>API key<input id="apiKey" type="password" autocomplete="off" placeholder="Syötä vain live-testaukseen" /></label>
             <label>API secret<input id="apiSecret" type="password" autocomplete="off" placeholder="Ei tallenneta selaimeen" /></label>
           </details>
@@ -90,6 +91,7 @@
         </section>
       </section>
     </main>
+    <script src="asterdex-plugin.js"></script>
     <script src="app.js"></script>
   </body>
 </html>
