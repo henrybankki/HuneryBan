@@ -45,8 +45,9 @@ class AsterDexAdapter {
   constructor(mode, credentials) {
     this.mode = mode;
     this.credentials = credentials;
-    this.plugin = new AsterDexPlugin({
-      baseUrl: credentials.apiBase || AsterDexPlugin.defaults.DEFAULT_FUTURES_BASE_URL,
+    this.plugin = new AsterProApiPlugin({
+      baseUrl: credentials.apiBase || AsterProApiPlugin.defaults.DEFAULT_PRO_FUTURES_BASE_URL,
+      user: credentials.apiUser,
       signer: credentials.apiSigner,
     });
   }
@@ -59,8 +60,8 @@ class AsterDexAdapter {
 
   async placeOrder(order) {
     if (this.mode === "live") {
-      if (!this.credentials.apiBase || !this.credentials.apiSigner) {
-        throw new Error("Live-tila vaatii AsterDex Base URL- ja signer-osoitteen.");
+      if (!this.credentials.apiBase || !this.credentials.apiUser || !this.credentials.apiSigner) {
+        throw new Error("Live-tila vaatii Aster Pro API Base URL-, user wallet- ja signer wallet -osoitteet.");
       }
       const response = await this.plugin.placeMarketOrder({
         symbol: order.symbol,
@@ -85,9 +86,8 @@ function readSettings() {
     stopLoss: Number($("stopLoss").value),
     takeProfit: Number($("takeProfit").value),
     apiBase: $("apiBase").value.trim(),
+    apiUser: $("apiUser").value.trim(),
     apiSigner: $("apiSigner").value.trim(),
-    apiKey: $("apiKey").value.trim(),
-    apiSecret: $("apiSecret").value.trim(),
   };
 }
 
@@ -189,7 +189,7 @@ function addLog(message) {
 function startBot(event) {
   event?.preventDefault();
   const settings = readSettings();
-  if (settings.mode === "live" && !confirm("Vahvista live-tila. AsterDex-plugin allekirjoittaa EIP-712 toimeksiantoja ja olet vastuussa oikeista toimeksiannoista.")) return;
+  if (settings.mode === "live" && !confirm("Vahvista live-tila. Aster Pro API -plugin allekirjoittaa EIP-712 toimeksiantoja ja olet vastuussa oikeista toimeksiannoista.")) return;
   state.running = true;
   $("botState").textContent = "Käynnissä";
   $("botState").className = "pill running";

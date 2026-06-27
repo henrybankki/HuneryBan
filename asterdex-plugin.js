@@ -1,6 +1,6 @@
 (function attachAsterDexPlugin(global) {
-  const DEFAULT_FUTURES_BASE_URL = "https://fapi3.asterdex.com";
-  const DEFAULT_TESTNET_BASE_URL = "https://testnet-fapi3.asterdex.com";
+  const DEFAULT_PRO_FUTURES_BASE_URL = "https://fapi3.asterdex.com";
+  const DEFAULT_PRO_TESTNET_BASE_URL = "https://testnet-fapi3.asterdex.com";
   const ASTER_EIP712_DOMAIN = {
     name: "AsterSignTransaction",
     version: "1",
@@ -11,15 +11,16 @@
     Message: [{ name: "msg", type: "string" }],
   };
 
-  class AsterDexPlugin {
+  class AsterProApiPlugin {
     constructor(options = {}) {
-      this.baseUrl = (options.baseUrl || DEFAULT_FUTURES_BASE_URL).replace(/\/$/, "");
+      this.baseUrl = (options.baseUrl || DEFAULT_PRO_FUTURES_BASE_URL).replace(/\/$/, "");
+      this.user = options.user || "";
       this.signer = options.signer || "";
       this.signatureProvider = options.signatureProvider || null;
     }
 
     static get defaults() {
-      return { DEFAULT_FUTURES_BASE_URL, DEFAULT_TESTNET_BASE_URL, ASTER_EIP712_DOMAIN };
+      return { DEFAULT_PRO_FUTURES_BASE_URL, DEFAULT_PRO_TESTNET_BASE_URL, ASTER_EIP712_DOMAIN };
     }
 
     toAsterSymbol(symbol) {
@@ -34,13 +35,21 @@
       return new URLSearchParams(params).toString();
     }
 
+    encodeSortedParams(params) {
+      const sortedEntries = Object.entries(params).sort(([left], [right]) => left.localeCompare(right));
+      return new URLSearchParams(sortedEntries).toString();
+    }
+
     async request(path, { method = "GET", params = {}, signed = false } = {}) {
       const requestParams = { ...params };
       if (signed) {
-        requestParams.nonce = requestParams.nonce || this.createNonce();
+        requestParams.user = requestParams.user || this.user;
         requestParams.signer = requestParams.signer || this.signer;
-        if (!requestParams.signer) throw new Error("AsterDex signer-osoite puuttuu.");
-        const message = this.encodeParams(requestParams);
+        requestParams.nonce = requestParams.nonce || this.createNonce();
+        requestParams.timestamp = requestParams.timestamp || String(Date.now());
+        if (!requestParams.user) throw new Error("Aster Pro API user wallet -osoite puuttuu.");
+        if (!requestParams.signer) throw new Error("Aster Pro API signer wallet -osoite puuttuu.");
+        const message = this.encodeSortedParams(requestParams);
         requestParams.signature = await this.signMessage(message);
       }
 
@@ -51,7 +60,7 @@
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: method === "GET" ? undefined : query,
       });
-      if (!response.ok) throw new Error(`AsterDex ${method} ${path} epäonnistui (${response.status}).`);
+      if (!response.ok) throw new Error(`Aster Pro API ${method} ${path} epäonnistui (${response.status}).`);
       const text = await response.text();
       return text ? JSON.parse(text) : {};
     }
@@ -59,7 +68,7 @@
     async signMessage(message) {
       if (this.signatureProvider) return this.signatureProvider(message, ASTER_EIP712_DOMAIN, ASTER_EIP712_TYPES);
       if (!global.ethereum?.request) {
-        throw new Error("Live-toimeksianto vaatii EIP-712 allekirjoittajan (esim. selainlompakko tai oma signatureProvider). ");
+        throw new Error("Aster Pro API live-toimeksianto vaatii EIP-712 allekirjoittajan (esim. selainlompakko tai oma signatureProvider). ");
       }
       const [account] = await global.ethereum.request({ method: "eth_requestAccounts" });
       const typedData = {
@@ -111,5 +120,6 @@
     }
   }
 
-  global.AsterDexPlugin = AsterDexPlugin;
+  global.AsterProApiPlugin = AsterProApiPlugin;
+  global.AsterDexPlugin = AsterProApiPlugin;
 })(window);

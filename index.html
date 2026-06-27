@@ -10,13 +10,13 @@
     <main class="shell">
       <section class="hero card">
         <div>
-          <p class="eyebrow">AsterDex • Paper & Live • Oma mikro-AI</p>
+          <p class="eyebrow">Aster Pro API • Paper & Live • Oma mikro-AI</p>
           <h1>AI-sijoitusbotti kryptotreidaukseen</h1>
           <p class="lead">
             Kevyt selainpohjainen botti, joka valitsee krypton esiasetetuista vaihtoehdoista,
             pisteyttää markkinan omalla sääntö-AI:lla ja avaa tai sulkee position strategian mukaan.
           </p>
-          <p class="risk">Ei sijoitusneuvontaa. Live-tila on suojattu vahvistuksilla ja vaatii oman AsterDex API -avaimen.</p>
+          <p class="risk">Ei sijoitusneuvontaa. Live-tila on suojattu vahvistuksilla ja vaatii Aster Pro API user- ja signer-walletin.</p>
         </div>
         <div class="status-panel">
           <span id="botState" class="pill idle">Pysäytetty</span>
@@ -32,7 +32,7 @@
             Treidaustila
             <select id="mode">
               <option value="paper">Paper trading</option>
-              <option value="live">Live AsterDex</option>
+              <option value="live">Live Aster Pro API</option>
             </select>
           </label>
           <label>
@@ -53,11 +53,10 @@
             <label>Take profit %<input id="takeProfit" type="number" min="0.5" max="50" step="0.1" value="6" /></label>
           </div>
           <details>
-            <summary>AsterDex API -asetukset</summary>
-            <label>Base URL<input id="apiBase" type="url" value="https://fapi3.asterdex.com" placeholder="https://fapi3.asterdex.com" /></label>
-            <label>Signer wallet<input id="apiSigner" type="text" placeholder="0x... Aster API signer" /></label>
-            <label>API key<input id="apiKey" type="password" autocomplete="off" placeholder="Syötä vain live-testaukseen" /></label>
-            <label>API secret<input id="apiSecret" type="password" autocomplete="off" placeholder="Ei tallenneta selaimeen" /></label>
+            <summary>Aster Pro API -asetukset</summary>
+            <label>Pro Base URL<input id="apiBase" type="url" value="https://fapi3.asterdex.com" placeholder="https://fapi3.asterdex.com" /></label>
+            <label>User wallet<input id="apiUser" type="text" placeholder="0x... päätilin wallet" /></label>
+            <label>Signer wallet<input id="apiSigner" type="text" placeholder="0x... Pro API / agent signer" /></label>
           </details>
           <div class="actions">
             <button id="startBtn" type="submit">Käynnistä botti</button>

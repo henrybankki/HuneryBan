@@ -1,6 +1,6 @@
 # Hunery AI Sijoitusbotti
 
-Selainpohjainen prototyyppi kryptobottiin, jossa on oma kevyt sääntö-AI, paper trading -tila, oikea AsterDex V3 -plugin sekä HTML-käyttöliittymä.
+Selainpohjainen prototyyppi kryptobottiin, jossa on oma kevyt sääntö-AI, paper trading -tila, uusi Aster Pro API -plugin sekä HTML-käyttöliittymä.
 
 ## Ominaisuudet
 
@@ -9,8 +9,9 @@ Selainpohjainen prototyyppi kryptobottiin, jossa on oma kevyt sääntö-AI, pape
 - Automaattinen position avaus, kun AI antaa BUY-signaalin.
 - Automaattinen sulkeminen stop loss-, take profit- tai SELL-signaalilla.
 - Paper trading toimii kokonaan selaimessa ilman API-avaimia.
-- `asterdex-plugin.js` käyttää AsterDex Futures V3 -polkuja kuten `/fapi/v3/ping`, `/fapi/v3/time`, `/fapi/v3/ticker/price` ja `/fapi/v3/order`.
-- Live-tilassa plugin muodostaa AsterDexin vaatiman EIP-712 `AsterSignTransaction` -allekirjoituksen selaimen `window.ethereum`-lompakolla tai omalla `signatureProvider`-funktiolla.
+- `asterdex-plugin.js` sisältää uuden `AsterProApiPlugin`-clientin, joka käyttää Aster Pro / V3 Futures -base URL:ia `https://fapi3.asterdex.com` ja `/fapi/v3/*`-polkuja.
+- Pro-signed requestit lisäävät `user`, `signer`, `nonce`, `timestamp` ja `signature` -kentät ja allekirjoittavat ASCII-järjestetyn parametrimerkkijonon EIP-712 `AsterSignTransaction` -viestinä.
+- Live-tilassa plugin allekirjoittaa selaimen `window.ethereum`-lompakolla tai omalla `signatureProvider`-funktiolla. Vanhoja V1 `API key + secret` -kenttiä ei enää käytetä.
 
 ## Käynnistys
 
@@ -22,12 +23,13 @@ python3 -m http.server 8080
 
 ja avaa <http://localhost:8080>.
 
-## AsterDex live -käyttö
+## Aster Pro API live -käyttö
 
-1. Luo AsterDex API signer / API wallet AsterDexissä.
-2. Syötä käyttöliittymään Futures V3 Base URL, oletuksena `https://fapi3.asterdex.com`.
-3. Syötä signer-osoite `0x...` muodossa.
-4. Käynnistä botti live-tilassa ja allekirjoita EIP-712-viestit lompakossa.
+1. Luo Aster Pro API / Agent / API wallet Asterissä.
+2. Syötä käyttöliittymään Pro Futures Base URL, oletuksena `https://fapi3.asterdex.com`.
+3. Syötä `User wallet` eli päätilin wallet-osoite.
+4. Syötä `Signer wallet` eli Pro API / agent signer -osoite.
+5. Käynnistä botti live-tilassa ja allekirjoita EIP-712-viestit lompakossa.
 
 > Huomio: selainpohjainen live-treidaus on tarkoitettu vain kehitys- ja testikäyttöön. Tuotannossa allekirjoitus kannattaa tehdä omalla backendillä tai hardware-wallet-/vault-ratkaisulla, eikä salaisia avaimia pidä koskaan tallentaa tähän repositorioon.
 
