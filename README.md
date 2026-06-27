@@ -11,7 +11,7 @@ Selainpohjainen prototyyppi kryptobottiin, jossa on oma kevyt sääntö-AI, pape
 - Paper trading toimii kokonaan selaimessa ilman API-avaimia.
 - `asterdex-plugin.js` sisältää uuden `AsterProApiPlugin`-clientin, joka käyttää Aster Pro / V3 Futures -base URL:ia `https://fapi3.asterdex.com` ja `/fapi/v3/*`-polkuja.
 - Pro-signed requestit lisäävät `user`, `signer`, `nonce`, `timestamp` ja `signature` -kentät ja allekirjoittavat ASCII-järjestetyn parametrimerkkijonon EIP-712 `AsterSignTransaction` -viestinä.
-- Live-tilassa plugin allekirjoittaa selaimen `window.ethereum`-lompakolla tai omalla `signatureProvider`-funktiolla. Vanhoja V1 `API key + secret` -kenttiä ei enää käytetä.
+- Live-tilassa plugin allekirjoittaa ensisijaisesti selaimen `window.ethereum`-lompakolla, vaihtoehtoisesti kehitystestaukseen syötetyllä signer private keyllä `ethers.js`-kirjaston avulla tai omalla `signatureProvider`-funktiolla. Vanhoja V1 `API key + secret` -kenttiä ei enää käytetä.
 
 ## Käynnistys
 
@@ -29,9 +29,9 @@ ja avaa <http://localhost:8080>.
 2. Syötä käyttöliittymään Pro Futures Base URL, oletuksena `https://fapi3.asterdex.com`.
 3. Syötä `User wallet` eli päätilin wallet-osoite.
 4. Syötä `Signer wallet` eli Pro API / agent signer -osoite.
-5. Käynnistä botti live-tilassa ja allekirjoita EIP-712-viestit lompakossa.
+5. Käynnistä botti live-tilassa ja allekirjoita EIP-712-viestit lompakossa. Jos selaimessa ei ole lompakkoa, voit kehitystestissä syöttää signer private keyn käyttöliittymään; sitä ei tallenneta selaimen localStorageen tai repositorioon.
 
-> Huomio: selainpohjainen live-treidaus on tarkoitettu vain kehitys- ja testikäyttöön. Tuotannossa allekirjoitus kannattaa tehdä omalla backendillä tai hardware-wallet-/vault-ratkaisulla, eikä salaisia avaimia pidä koskaan tallentaa tähän repositorioon.
+> Huomio: selainpohjainen live-treidaus on tarkoitettu vain kehitys- ja testikäyttöön. Tuotannossa private key -kenttää ei kannata käyttää. Allekirjoitus kannattaa tehdä omalla backendillä tai hardware-wallet-/vault-ratkaisulla, eikä salaisia avaimia pidä koskaan tallentaa tähän repositorioon.
 
 ## Turvallisuus
 

@@ -16,6 +16,7 @@
       this.baseUrl = (options.baseUrl || DEFAULT_PRO_FUTURES_BASE_URL).replace(/\/$/, "");
       this.user = options.user || "";
       this.signer = options.signer || "";
+      this.privateKey = options.privateKey || "";
       this.signatureProvider = options.signatureProvider || null;
     }
 
@@ -67,11 +68,13 @@
 
     async signMessage(message) {
       if (this.signatureProvider) return this.signatureProvider(message, ASTER_EIP712_DOMAIN, ASTER_EIP712_TYPES);
-      if (!global.ethereum?.request) {
-        throw new Error("Aster Pro API live-toimeksianto vaatii EIP-712 allekirjoittajan (esim. selainlompakko tai oma signatureProvider). ");
-      }
-      const [account] = await global.ethereum.request({ method: "eth_requestAccounts" });
-      const typedData = {
+      if (this.privateKey) return this.signWithLocalPrivateKey(message);
+      if (global.ethereum?.request) return this.signWithInjectedWallet(message);
+      throw new Error("Aster Pro API tarvitsee allekirjoittajan: asenna/avaa selainlompakko tai syötä Pro API signer private key kehitystestausta varten.");
+    }
+
+    typedData(message) {
+      return {
         types: { EIP712Domain: [
           { name: "name", type: "string" },
           { name: "version", type: "string" },
@@ -82,10 +85,22 @@
         domain: ASTER_EIP712_DOMAIN,
         message: { msg: message },
       };
+    }
+
+    async signWithInjectedWallet(message) {
+      const [account] = await global.ethereum.request({ method: "eth_requestAccounts" });
       return global.ethereum.request({
         method: "eth_signTypedData_v4",
-        params: [account, JSON.stringify(typedData)],
+        params: [account, JSON.stringify(this.typedData(message))],
       });
+    }
+
+    async signWithLocalPrivateKey(message) {
+      if (!global.ethers?.Wallet) {
+        throw new Error("Paikallinen private key -allekirjoitus vaatii ethers.js-kirjaston latautumisen.");
+      }
+      const wallet = new global.ethers.Wallet(this.privateKey);
+      return wallet.signTypedData(ASTER_EIP712_DOMAIN, ASTER_EIP712_TYPES, { msg: message });
     }
 
     ping() {

@@ -49,6 +49,7 @@ class AsterDexAdapter {
       baseUrl: credentials.apiBase || AsterProApiPlugin.defaults.DEFAULT_PRO_FUTURES_BASE_URL,
       user: credentials.apiUser,
       signer: credentials.apiSigner,
+      privateKey: credentials.apiPrivateKey,
     });
   }
 
@@ -88,6 +89,7 @@ function readSettings() {
     apiBase: $("apiBase").value.trim(),
     apiUser: $("apiUser").value.trim(),
     apiSigner: $("apiSigner").value.trim(),
+    apiPrivateKey: $("apiPrivateKey").value.trim(),
   };
 }
 

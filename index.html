@@ -57,6 +57,7 @@
             <label>Pro Base URL<input id="apiBase" type="url" value="https://fapi3.asterdex.com" placeholder="https://fapi3.asterdex.com" /></label>
             <label>User wallet<input id="apiUser" type="text" placeholder="0x... päätilin wallet" /></label>
             <label>Signer wallet<input id="apiSigner" type="text" placeholder="0x... Pro API / agent signer" /></label>
+            <label>Signer private key <small>vain kehitystestiin, ei tallenneta</small><input id="apiPrivateKey" type="password" autocomplete="off" placeholder="0x... jos selaimessa ei ole lompakkoa" /></label>
           </details>
           <div class="actions">
             <button id="startBtn" type="submit">Käynnistä botti</button>
@@ -90,6 +91,7 @@
         </section>
       </section>
     </main>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.5/dist/ethers.umd.min.js"></script>
     <script src="asterdex-plugin.js"></script>
     <script src="app.js"></script>
   </body>
