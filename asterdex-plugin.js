@@ -52,11 +52,13 @@
         requestParams.nonce = requestParams.nonce || this.createNonce();
         requestParams.signer = requestParams.signer || this.signer;
         if (!requestParams.signer) throw new Error("Aster Pro API signer wallet -osoite puuttuu.");
-        const message = this.encodeParams(requestParams);
+        const message = this.encodeSortedParams(requestParams);
         requestParams.signature = await this.signMessage(message);
+        requestParams.__signedPayload = `${message}&signature=${encodeURIComponent(requestParams.signature)}`;
       }
 
-      const query = this.encodeParams(requestParams);
+      const query = requestParams.__signedPayload || this.encodeParams(requestParams);
+      delete requestParams.__signedPayload;
       const url = `${this.baseUrl}${path}${method === "GET" && query ? `?${query}` : ""}`;
       const response = await fetch(url, {
         method,
@@ -68,7 +70,9 @@
         const details = text ? `: ${text.slice(0, 300)}` : "";
         const hint = text.includes("No agent found")
           ? " — tarkista, että User wallet on päätilisi wallet ja Signer wallet on siihen Asterissä luotu Pro API / agent wallet."
-          : "";
+          : text.includes("Signature check failed")
+            ? " — tarkista, että allekirjoittava lompakko tai private key on täsmälleen sama osoite kuin Signer wallet, ei päätilin User wallet."
+            : "";
         throw new Error(`Aster Pro API ${method} ${path} epäonnistui (${response.status})${details}${hint}`);
       }
       return text ? JSON.parse(text) : {};
@@ -95,8 +99,19 @@
       };
     }
 
+    normalizeAddress(address) {
+      return String(address || "").trim().toLowerCase();
+    }
+
+    assertSignerAddress(actualAddress) {
+      if (this.signer && this.normalizeAddress(actualAddress) !== this.normalizeAddress(this.signer)) {
+        throw new Error("Aster Pro API signature check failed ennen lähetystä: allekirjoittava wallet ei vastaa Signer wallet -kenttää. Vaihda lompakossa agent signer -osoitteeseen tai käytä signer private keytä.");
+      }
+    }
+
     async signWithInjectedWallet(message) {
       const [account] = await global.ethereum.request({ method: "eth_requestAccounts" });
+      this.assertSignerAddress(account);
       return global.ethereum.request({
         method: "eth_signTypedData_v4",
         params: [account, JSON.stringify(this.typedData(message))],
@@ -108,6 +123,7 @@
         throw new Error("Paikallinen private key -allekirjoitus vaatii ethers.js-kirjaston latautumisen.");
       }
       const wallet = new global.ethers.Wallet(this.privateKey);
+      this.assertSignerAddress(wallet.address);
       return wallet.signTypedData(ASTER_EIP712_DOMAIN, ASTER_EIP712_TYPES, { msg: message });
     }
 
