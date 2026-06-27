@@ -16,7 +16,7 @@
       this.baseUrl = (options.baseUrl || DEFAULT_PRO_FUTURES_BASE_URL).replace(/\/$/, "");
       this.user = options.user || "";
       this.signer = options.signer || "";
-      this.includeUser = Boolean(options.includeUser);
+      this.includeUser = options.includeUser !== false;
       this.privateKey = options.privateKey || "";
       this.signatureProvider = options.signatureProvider || null;
     }
@@ -45,7 +45,10 @@
     async request(path, { method = "GET", params = {}, signed = false } = {}) {
       const requestParams = { ...params };
       if (signed) {
-        if (this.includeUser && this.user) requestParams.user = requestParams.user || this.user;
+        if (this.includeUser) {
+          requestParams.user = requestParams.user || this.user;
+          if (!requestParams.user) throw new Error("Aster Pro API user wallet -osoite puuttuu. Syötä päätilin wallet, johon signer-agentti on liitetty.");
+        }
         requestParams.nonce = requestParams.nonce || this.createNonce();
         requestParams.signer = requestParams.signer || this.signer;
         if (!requestParams.signer) throw new Error("Aster Pro API signer wallet -osoite puuttuu.");
@@ -63,7 +66,10 @@
       const text = await response.text();
       if (!response.ok) {
         const details = text ? `: ${text.slice(0, 300)}` : "";
-        throw new Error(`Aster Pro API ${method} ${path} epäonnistui (${response.status})${details}`);
+        const hint = text.includes("No agent found")
+          ? " — tarkista, että User wallet on päätilisi wallet ja Signer wallet on siihen Asterissä luotu Pro API / agent wallet."
+          : "";
+        throw new Error(`Aster Pro API ${method} ${path} epäonnistui (${response.status})${details}${hint}`);
       }
       return text ? JSON.parse(text) : {};
     }
