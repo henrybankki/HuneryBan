@@ -16,6 +16,7 @@
       this.baseUrl = (options.baseUrl || DEFAULT_PRO_FUTURES_BASE_URL).replace(/\/$/, "");
       this.user = options.user || "";
       this.signer = options.signer || "";
+      this.includeUser = Boolean(options.includeUser);
       this.privateKey = options.privateKey || "";
       this.signatureProvider = options.signatureProvider || null;
     }
@@ -44,13 +45,11 @@
     async request(path, { method = "GET", params = {}, signed = false } = {}) {
       const requestParams = { ...params };
       if (signed) {
-        requestParams.user = requestParams.user || this.user;
-        requestParams.signer = requestParams.signer || this.signer;
+        if (this.includeUser && this.user) requestParams.user = requestParams.user || this.user;
         requestParams.nonce = requestParams.nonce || this.createNonce();
-        requestParams.timestamp = requestParams.timestamp || String(Date.now());
-        if (!requestParams.user) throw new Error("Aster Pro API user wallet -osoite puuttuu.");
+        requestParams.signer = requestParams.signer || this.signer;
         if (!requestParams.signer) throw new Error("Aster Pro API signer wallet -osoite puuttuu.");
-        const message = this.encodeSortedParams(requestParams);
+        const message = this.encodeParams(requestParams);
         requestParams.signature = await this.signMessage(message);
       }
 
@@ -61,8 +60,11 @@
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: method === "GET" ? undefined : query,
       });
-      if (!response.ok) throw new Error(`Aster Pro API ${method} ${path} epäonnistui (${response.status}).`);
       const text = await response.text();
+      if (!response.ok) {
+        const details = text ? `: ${text.slice(0, 300)}` : "";
+        throw new Error(`Aster Pro API ${method} ${path} epäonnistui (${response.status})${details}`);
+      }
       return text ? JSON.parse(text) : {};
     }
 
@@ -121,16 +123,17 @@
     }
 
     placeMarketOrder({ symbol, side, quantity, reduceOnly = false }) {
+      const params = {
+        symbol: this.toAsterSymbol(symbol),
+        side,
+        type: "MARKET",
+        quantity: String(quantity),
+      };
+      if (reduceOnly) params.reduceOnly = "true";
       return this.request("/fapi/v3/order", {
         method: "POST",
         signed: true,
-        params: {
-          symbol: this.toAsterSymbol(symbol),
-          side,
-          type: "MARKET",
-          quantity: String(quantity),
-          reduceOnly: String(reduceOnly),
-        },
+        params,
       });
     }
   }

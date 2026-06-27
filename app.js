@@ -49,6 +49,7 @@ class AsterDexAdapter {
       baseUrl: credentials.apiBase || AsterProApiPlugin.defaults.DEFAULT_PRO_FUTURES_BASE_URL,
       user: credentials.apiUser,
       signer: credentials.apiSigner,
+      includeUser: Boolean(credentials.apiUser),
       privateKey: credentials.apiPrivateKey,
     });
   }
@@ -61,8 +62,8 @@ class AsterDexAdapter {
 
   async placeOrder(order) {
     if (this.mode === "live") {
-      if (!this.credentials.apiBase || !this.credentials.apiUser || !this.credentials.apiSigner) {
-        throw new Error("Live-tila vaatii Aster Pro API Base URL-, user wallet- ja signer wallet -osoitteet.");
+      if (!this.credentials.apiBase || !this.credentials.apiSigner) {
+        throw new Error("Live-tila vaatii Aster Pro API Base URL- ja signer wallet -osoitteen.");
       }
       const response = await this.plugin.placeMarketOrder({
         symbol: order.symbol,
