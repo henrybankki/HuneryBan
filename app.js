@@ -1,5 +1,5 @@
 const marketProfiles = {
-  "BTC/USDT": { price: 64200, volatility: 0.012, trend: 0.58 },
+  "ADA/USDT": { price: 0.1478, volatility: 0.012, trend: 0.58 },
   "ETH/USDT": { price: 3400, volatility: 0.018, trend: 0.54 },
   "SOL/USDT": { price: 145, volatility: 0.032, trend: 0.62 },
   "BNB/USDT": { price: 585, volatility: 0.017, trend: 0.51 },
